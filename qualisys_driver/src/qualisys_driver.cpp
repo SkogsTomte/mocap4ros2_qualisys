@@ -225,7 +225,7 @@ void QualisysDriver::process_packet(CRTPacket * const packet)
 	  if (packet->Get6DOFBody(i, fX, fY, fZ, rotationMatrix))
 	  {
 		// Read the 6DOF rigid body name
-		body_msg.header.frame_id = rtProtocol.Get6DOFBodyName(i);
+		body_msg.header.frame_id = port_protocol_.Get6DOFBodyName(i);
 		// Output 6DOF data
 		body_msg.pose.position.x = fX;
 		body_msg.pose.position.y = fY;
