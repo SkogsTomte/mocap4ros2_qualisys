@@ -171,13 +171,13 @@ void QualisysDriver::process_packet(CRTPacket * const packet)
   }
   last_frame_number_ = frame_number;
 
+  geometry_msgs::msg::PoseStamped body_msg;
   if (use_markers_with_id_) {
     if (!marker_with_id_pub_->is_activated()) {
       return;
     }
 
     mocap_msgs::msg::Markers markers_msg;
-    geometry_msgs::msg::PoseStamped body_msg;
     markers_msg.header.stamp = rclcpp::Clock().now();
     markers_msg.frame_number = frame_number;
 
