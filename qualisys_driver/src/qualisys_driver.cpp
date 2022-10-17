@@ -317,7 +317,7 @@ CallbackReturnT QualisysDriver::on_activate(const rclcpp_lifecycle::State &)
   RCLCPP_INFO(get_logger(), "State label [%s]", get_current_state().label().c_str());
   update_pub_->on_activate();
   marker_pub_->on_activate();
-  rigid_body_pup_->on_activate();
+  rigid_body_pub_->on_activate();
   marker_with_id_pub_->on_activate();
   bool success = connect_qualisys();
 
