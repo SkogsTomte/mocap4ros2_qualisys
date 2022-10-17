@@ -28,6 +28,82 @@
 
 using namespace std::chrono_literals;
 
+// quaternion = [w, x, y, z]'
+float* mRot2Quat(const float* m) {
+	float* res = new float[4];
+	//std::cout << ("Calculating quaternions\n");
+	float r11 = m[0];
+	float r12 = m[1];
+	float r13 = m[2];
+	float r21 = m[3];
+	float r22 = m[4];
+	float r23 = m[5];
+	float r31 = m[6];
+	float r32 = m[7];
+	float r33 = m[8];
+	//std::cout << r11 << " " << r12 << " "<< r13 << " "<< r21 << " "<< r22 << " "<< r23 << " "<< r31 << " "<< r32 << " "<< r33;
+	//std::cout << "\n\n";
+
+	float q0 = (r11 + r22 + r33 + 1.0f) / 4.0f;
+	float q1 = (r11 - r22 - r33 + 1.0f) / 4.0f;
+	float q2 = (-r11 + r22 - r33 + 1.0f) / 4.0f;
+	float q3 = (-r11 - r22 + r33 + 1.0f) / 4.0f;
+	if (q0 < 0.0f) {
+		q0 = 0.0f;
+	}
+	if (q1 < 0.0f) {
+		q1 = 0.0f;
+	}
+	if (q2 < 0.0f) {
+		q2 = 0.0f;
+	}
+	if (q3 < 0.0f) {
+		q3 = 0.0f;
+	}
+	q0 = sqrt(q0);
+	q1 = sqrt(q1);
+	q2 = sqrt(q2);
+	q3 = sqrt(q3);
+	if (q0 >= q1 && q0 >= q2 && q0 >= q3) {
+		q0 *= +1.0f;
+		q1 *= SIGN(r32 - r23);
+		q2 *= SIGN(r13 - r31);
+		q3 *= SIGN(r21 - r12);
+	}
+	else if (q1 >= q0 && q1 >= q2 && q1 >= q3) {
+		q0 *= SIGN(r32 - r23);
+		q1 *= +1.0f;
+		q2 *= SIGN(r21 + r12);
+		q3 *= SIGN(r13 + r31);
+	}
+	else if (q2 >= q0 && q2 >= q1 && q2 >= q3) {
+		q0 *= SIGN(r13 - r31);
+		q1 *= SIGN(r21 + r12);
+		q2 *= +1.0f;
+		q3 *= SIGN(r32 + r23);
+	}
+	else if (q3 >= q0 && q3 >= q1 && q3 >= q2) {
+		q0 *= SIGN(r21 - r12);
+		q1 *= SIGN(r31 + r13);
+		q2 *= SIGN(r32 + r23);
+		q3 *= +1.0f;
+	}
+	else {
+	        res[0] = -999999; res[1] =  -999999; res[2] = -999999; res[3] = -999999;
+		return res;
+		printf("coding error\n");
+	}
+	float r = NORM(q0, q1, q2, q3);
+	q0 /= r;
+	q1 /= r;
+	q2 /= r;
+	q3 /= r;
+
+	res[0] = q0; res[1] =  q1; res[2] = q2; res[3] = q3;
+	return res;
+}
+
+
 void QualisysDriver::set_settings_qualisys()
 {
 }
@@ -61,6 +137,7 @@ void QualisysDriver::loop()
 void QualisysDriver::process_packet(CRTPacket * const packet)
 {
   unsigned int marker_count = packet->Get3DNoLabelsMarkerCount();
+  unsigned int body_count = packet->Get6DOFBodyCount();
   int frame_number = packet->GetFrameNumber();
 
   int frame_diff = 0;
@@ -87,6 +164,7 @@ void QualisysDriver::process_packet(CRTPacket * const packet)
     }
 
     mocap_msgs::msg::Markers markers_msg;
+    geometry_msgs::msg::PoseStamped body_msg;
     markers_msg.header.stamp = rclcpp::Clock().now();
     markers_msg.frame_number = frame_number;
 
@@ -103,7 +181,8 @@ void QualisysDriver::process_packet(CRTPacket * const packet)
     }
 
     marker_with_id_pub_->publish(markers_msg);
-  } else {
+  }
+  else {
     if (!marker_pub_->is_activated()) {
       return;
     }
@@ -125,7 +204,33 @@ void QualisysDriver::process_packet(CRTPacket * const packet)
 
     marker_pub_->publish(markers_msg);
   }
-}
+
+  const bool printOutput = false;
+  float fX, fY, fZ;
+  float* rotationMatrix = new float[9];
+  for (unsigned int i = 0; i < body_count; i++){
+	  if (packet->Get6DOFBody(i, fX, fY, fZ, rotationMatrix))
+	  {
+		// Read the 6DOF rigid body name
+		body_msg.header.frame_id = rtProtocol.Get6DOFBodyName(i);
+		// Output 6DOF data
+		body_msg.pose.position.x = fX;
+		body_msg.pose.position.y = fY;
+		body_msg.pose.position.z = fZ;
+		float* temp = mRot2Quat(rotationMatrix);
+		body_msg.pose.orientation.x = temp[1];
+		body_msg.pose.orientation.y = temp[2];
+		body_msg.pose.orientation.z = temp[3];
+		body_msg.pose.orientation.w = temp[0];
+		if(printOutput){
+			printf("Pos: %9.3f %9.3f %9.3f    Rot: %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f\n",
+			fX, fY, fZ, rotationMatrix[0], rotationMatrix[1], rotationMatrix[2],
+			rotationMatrix[3], rotationMatrix[4], rotationMatrix[5], rotationMatrix[6], rotationMatrix[7], rotationMatrix[8]);
+		}
+		rigid_body_pub_->publish(body_msg);
+		delete[] temp;
+	  }
+  }
 
 bool QualisysDriver::stop_qualisys()
 {
@@ -180,6 +285,8 @@ CallbackReturnT QualisysDriver::on_configure(const rclcpp_lifecycle::State &)
   marker_with_id_pub_ = create_publisher<mocap_msgs::msg::Markers>(
     "/markers_with_id", 100);
 
+  rigid_body_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("/rigid_bodies",100);
+
   update_pub_ = create_publisher<std_msgs::msg::Empty>(
     "/qualisys_driver/update_notify", qos);
 
@@ -196,6 +303,7 @@ CallbackReturnT QualisysDriver::on_activate(const rclcpp_lifecycle::State &)
   RCLCPP_INFO(get_logger(), "State label [%s]", get_current_state().label().c_str());
   update_pub_->on_activate();
   marker_pub_->on_activate();
+  rigid_body_pup_->on_activate();
   marker_with_id_pub_->on_activate();
   bool success = connect_qualisys();
 
@@ -220,6 +328,7 @@ CallbackReturnT QualisysDriver::on_deactivate(const rclcpp_lifecycle::State &)
   update_pub_->on_deactivate();
   marker_pub_->on_deactivate();
   marker_with_id_pub_->on_deactivate();
+  rigid_body_pub_->on_deactivate();
   stop_qualisys();
   RCLCPP_INFO(get_logger(), "Deactivated!\n");
 
@@ -233,6 +342,7 @@ CallbackReturnT QualisysDriver::on_cleanup(const rclcpp_lifecycle::State &)
   update_pub_.reset();
   marker_pub_.reset();
   marker_with_id_pub_.reset();
+  rigid_body_pub_.reset();
   timer_->reset();
   RCLCPP_INFO(get_logger(), "Cleaned up!\n");
 
