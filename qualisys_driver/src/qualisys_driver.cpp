@@ -244,6 +244,7 @@ void QualisysDriver::process_packet(CRTPacket * const packet)
 		delete[] temp;
 	  }
   }
+}
 
 bool QualisysDriver::stop_qualisys()
 {
