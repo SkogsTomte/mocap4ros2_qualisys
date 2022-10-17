@@ -23,10 +23,23 @@
 #include <memory>
 #include <algorithm>
 #include <utility>
+#include <chrono>
+#include <iostream>
+#include <functional>
+#include <ratio>
+#include <tgmath.h>
 #include "qualisys_driver/qualisys_driver.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
 
 using namespace std::chrono_literals;
+
+inline float SIGN(float x) {
+	return (x >= 0.0f) ? +1.0f : -1.0f;
+}
+
+inline float NORM(float a, float b, float c, float d) {
+	return sqrt(a * a + b * b + c * c + d * d);
+}
 
 // quaternion = [w, x, y, z]'
 float* mRot2Quat(const float* m) {
