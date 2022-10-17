@@ -33,6 +33,16 @@
 
 using namespace std::chrono_literals;
 
+std_msgs::msg::Header_<std::allocator<void> >::_stamp_type stampRt2Ros(long long unsigned int rtStamp){
+	int sec = static_cast<int>(rtStamp/1000000);
+	int nsec = static_cast<int>(rtStamp%1000000);
+	std_msgs::msg::Header_<std::allocator<void>>::_stamp_type rosStamp;
+	rosStamp.sec = sec;
+	rosStamp.nanosec = nsec;
+	return rosStamp;
+};
+
+
 inline float SIGN(float x) {
 	return (x >= 0.0f) ? +1.0f : -1.0f;
 }
@@ -125,7 +135,7 @@ void QualisysDriver::loop()
 {
   CRTPacket * prt_packet = port_protocol_.GetRTPacket();
   CRTPacket::EPacketType e_type;
-  port_protocol_.GetCurrentFrame(CRTProtocol::cComponent3dNoLabels);
+  port_protocol_.GetCurrentFrame(CRTProtocol::cComponent6d);
   if (port_protocol_.ReceiveRTPacket(e_type, true)) {
     switch (e_type) {
       case CRTPacket::PacketError:
@@ -218,9 +228,12 @@ void QualisysDriver::process_packet(CRTPacket * const packet)
     marker_pub_->publish(markers_msg);
   }
 
+  //RCLCPP_INFO(get_logger(), std::to_string(body_count).c_str());
   const bool printOutput = false;
   float fX, fY, fZ;
   float* rotationMatrix = new float[9];
+  body_msg.header.stamp = stampRt2Ros(packet->GetTimeStamp());
+ //RCLCPP_INFO(get_logger(), std::to_string(packet->GetTimeStamp()).c_str());
   for (unsigned int i = 0; i < body_count; i++){
 	  if (packet->Get6DOFBody(i, fX, fY, fZ, rotationMatrix))
 	  {
@@ -236,13 +249,15 @@ void QualisysDriver::process_packet(CRTPacket * const packet)
 		body_msg.pose.orientation.z = temp[3];
 		body_msg.pose.orientation.w = temp[0];
 		if(printOutput){
-			printf("Pos: %9.3f %9.3f %9.3f    Rot: %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f\n",
+			RCLCPP_INFO(get_logger(),"Pos: %9.3f %9.3f %9.3f    Rot: %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f\n",
 			fX, fY, fZ, rotationMatrix[0], rotationMatrix[1], rotationMatrix[2],
 			rotationMatrix[3], rotationMatrix[4], rotationMatrix[5], rotationMatrix[6], rotationMatrix[7], rotationMatrix[8]);
 		}
 		rigid_body_pub_->publish(body_msg);
 		delete[] temp;
 	  }
+	  if(printOutput)
+		  RCLCPP_INFO(get_logger(), "\n");
   }
 }
 
