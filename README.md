@@ -7,7 +7,8 @@
 Requisites: qualisys_cpp_skd
 
 - Just clone recurseivelly this repo to get https://github.com/qualisys/qualisys_cpp_sdk, or set QualisysSDK_PATH
-- To clone recurseivelly: ```git clone --recurse-submodules git@github.com:SkogsTomte/mocap4ros2_qualisys.git```
+- To clone recurseivelly:
+```git clone --recurse-submodules git@github.com:SkogsTomte/mocap4ros2_qualisys.git```
 - If you build qualisys_cpp_sdk in your workspace, the first time you build the workspace, exclude qualisys_driver:
 ```
 colcon build --symlink-install --packages-skip qualisys_driver
@@ -34,7 +35,7 @@ chmod +x run.sh
 ```
 - To open more terminal windows for the same container, open a new terminal and run:
 ``` sudo docker ps ```
-- Check the id of the container and the run:
+- Check the id of the container and then run:
 ```
 sudo docker exec -it <CONTAINER_ID> bash
 ```
@@ -44,10 +45,10 @@ where you replace <CONTAINER_ID> with the id of your container.
 - Open qualisys and define your rigid bodies.
 - Source you ros environment
 ```
-source <ROS WS DIR>/install/setup.bash
+source <ROS_WS_DIR>/install/setup.bash
 ```
-(Where of course you replace <ROS WS DIR> with the path to your workspace, which would be /root/ros2_ws if you use docker)
-```
+Where of course you replace <ROS_WS_DIR> with the path to your workspace, which would be /root/ros2_ws if you use docker
+
 - In the file ros2_ws/src/mocap4ros2_qualisys/qualisys_driver/config/qualisys_driver_params.yaml make sure the right parameters are choosen. All parameters except maybe the ip (host_name) can probably be left on default.
 - Launch the node:
 ```
