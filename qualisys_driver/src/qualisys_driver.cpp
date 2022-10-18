@@ -135,7 +135,7 @@ void QualisysDriver::loop()
 {
   CRTPacket * prt_packet = port_protocol_.GetRTPacket();
   CRTPacket::EPacketType e_type;
-  port_protocol_.GetCurrentFrame(CRTProtocol::cComponent6d);
+  port_protocol_.GetCurrentFrame(CRTProtocol::cComponent6d);//CRTProtocol::cComponent3dNoLabels
   if (port_protocol_.ReceiveRTPacket(e_type, true)) {
     switch (e_type) {
       case CRTPacket::PacketError:
