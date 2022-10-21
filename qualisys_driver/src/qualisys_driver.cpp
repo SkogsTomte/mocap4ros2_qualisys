@@ -135,7 +135,7 @@ void QualisysDriver::loop()
 {
   CRTPacket * prt_packet = port_protocol_.GetRTPacket();
   CRTPacket::EPacketType e_type;
-  port_protocol_.GetCurrentFrame(CRTProtocol::cComponent6d);//CRTProtocol::cComponent3dNoLabels
+  port_protocol_.GetCurrentFrame(CRTProtocol::cComponent6dRes);//CRTProtocol::cComponent3dNoLabels
   if (port_protocol_.ReceiveRTPacket(e_type, true)) {
     switch (e_type) {
       case CRTPacket::PacketError:
@@ -160,7 +160,7 @@ void QualisysDriver::loop()
 void QualisysDriver::process_packet(CRTPacket * const packet)
 {
   unsigned int marker_count = packet->Get3DNoLabelsMarkerCount();
-  unsigned int body_count = packet->Get6DOFBodyCount();
+  unsigned int body_count = packet->Get6DOFResidualBodyCount();
   int frame_number = packet->GetFrameNumber();
 
   int frame_diff = 0;
@@ -181,7 +181,7 @@ void QualisysDriver::process_packet(CRTPacket * const packet)
   }
   last_frame_number_ = frame_number;
 
-  geometry_msgs::msg::PoseStamped body_msg;
+  geometry_msgs::msg::PoseWithCovarianceStamped body_msg;
   if (use_markers_with_id_) {
     if (!marker_with_id_pub_->is_activated()) {
       return;
@@ -230,24 +230,25 @@ void QualisysDriver::process_packet(CRTPacket * const packet)
 
   //RCLCPP_INFO(get_logger(), std::to_string(body_count).c_str());
   const bool printOutput = false;
-  float fX, fY, fZ;
+  float fX, fY, fZ, fRes;
   float* rotationMatrix = new float[9];
   body_msg.header.stamp = stampRt2Ros(packet->GetTimeStamp());
  //RCLCPP_INFO(get_logger(), std::to_string(packet->GetTimeStamp()).c_str());
   for (unsigned int i = 0; i < body_count; i++){
-	  if (packet->Get6DOFBody(i, fX, fY, fZ, rotationMatrix))
+	  if (packet->Get6DOFResidualBody(i, fX, fY, fZ, rotationMatrix))
 	  {
 		// Read the 6DOF rigid body name
 		body_msg.header.frame_id = port_protocol_.Get6DOFBodyName(i);
 		// Output 6DOF data
-		body_msg.pose.position.x = fX;
-		body_msg.pose.position.y = fY;
+		body_msg.pose.pose.position.x = fX;
+		body_msg.pose.pose.position.y = fY;
 		body_msg.pose.position.z = fZ;
 		float* temp = mRot2Quat(rotationMatrix);
-		body_msg.pose.orientation.x = temp[1];
-		body_msg.pose.orientation.y = temp[2];
-		body_msg.pose.orientation.z = temp[3];
-		body_msg.pose.orientation.w = temp[0];
+		body_msg.pose.pose.orientation.x = temp[1];
+		body_msg.pose.pose.orientation.y = temp[2];
+		body_msg.pose.pose.orientation.z = temp[3];
+		body_msg.pose.pose.orientation.w = temp[0];
+		body_msg.pose.covariance = fRes;
 		if(printOutput){
 			RCLCPP_INFO(get_logger(),"Pos: %9.3f %9.3f %9.3f    Rot: %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f\n",
 			fX, fY, fZ, rotationMatrix[0], rotationMatrix[1], rotationMatrix[2],
