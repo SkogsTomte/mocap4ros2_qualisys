@@ -248,7 +248,7 @@ void QualisysDriver::process_packet(CRTPacket * const packet)
 		body_msg.pose.pose.orientation.y = temp[2];
 		body_msg.pose.pose.orientation.z = temp[3];
 		body_msg.pose.pose.orientation.w = temp[0];
-		body_msg.pose.covariance = fRes;
+		body_msg.pose.covariance[0] = fRes;
 		if(printOutput){
 			RCLCPP_INFO(get_logger(),"Pos: %9.3f %9.3f %9.3f    Rot: %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f\n",
 			fX, fY, fZ, rotationMatrix[0], rotationMatrix[1], rotationMatrix[2],
