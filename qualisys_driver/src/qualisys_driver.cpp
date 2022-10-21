@@ -315,7 +315,7 @@ CallbackReturnT QualisysDriver::on_configure(const rclcpp_lifecycle::State &)
   marker_with_id_pub_ = create_publisher<mocap_msgs::msg::Markers>(
     "/markers_with_id", 100);
 
-  rigid_body_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("/rigid_bodies",100);
+  rigid_body_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/rigid_bodies",100);
 
   update_pub_ = create_publisher<std_msgs::msg::Empty>(
     "/qualisys_driver/update_notify", qos);
