@@ -235,7 +235,7 @@ void QualisysDriver::process_packet(CRTPacket * const packet)
   body_msg.header.stamp = stampRt2Ros(packet->GetTimeStamp());
  //RCLCPP_INFO(get_logger(), std::to_string(packet->GetTimeStamp()).c_str());
   for (unsigned int i = 0; i < body_count; i++){
-	  if (packet->Get6DOFResidualBody(i, fX, fY, fZ, rotationMatrix))
+	  if (packet->Get6DOFResidualBody(i, fX, fY, fZ, rotationMatrix, fRes))
 	  {
 		// Read the 6DOF rigid body name
 		body_msg.header.frame_id = port_protocol_.Get6DOFBodyName(i);
