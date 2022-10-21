@@ -242,7 +242,7 @@ void QualisysDriver::process_packet(CRTPacket * const packet)
 		// Output 6DOF data
 		body_msg.pose.pose.position.x = fX;
 		body_msg.pose.pose.position.y = fY;
-		body_msg.pose.position.z = fZ;
+		body_msg.pose.pose.position.z = fZ;
 		float* temp = mRot2Quat(rotationMatrix);
 		body_msg.pose.pose.orientation.x = temp[1];
 		body_msg.pose.pose.orientation.y = temp[2];
