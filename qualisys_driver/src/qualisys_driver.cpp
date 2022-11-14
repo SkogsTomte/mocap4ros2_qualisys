@@ -338,7 +338,7 @@ CallbackReturnT QualisysDriver::on_activate(const rclcpp_lifecycle::State &)
   bool success = connect_qualisys();
 
   if (success) {
-    timer_ = this->create_wall_timer(100ms, std::bind(&QualisysDriver::loop, this));
+    timer_ = this->create_wall_timer(8ms, std::bind(&QualisysDriver::loop, this));
 
     RCLCPP_INFO(get_logger(), "Activated!\n");
 
